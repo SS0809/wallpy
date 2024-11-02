@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         progressBar = findViewById(R.id.progressBar);
-
+        progressBar.setVisibility(View.INVISIBLE);
         // Initialize ImageView array
         imageViews = new ImageView[] {
                 findViewById(R.id.selected_image_view),
@@ -64,7 +64,11 @@ public class MainActivity extends AppCompatActivity {
                 findViewById(R.id.selected_image_view3),
                 findViewById(R.id.selected_image_view4),
                 findViewById(R.id.selected_image_view5),
-                findViewById(R.id.selected_image_view6)
+                findViewById(R.id.selected_image_view6),
+                findViewById(R.id.selected_image_view7),
+                findViewById(R.id.selected_image_view8),
+                findViewById(R.id.selected_image_view9)
+
         };
 
         // Load cached images into the corresponding ImageView
@@ -105,26 +109,19 @@ public class MainActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                        Uri selectedImageUri = result.getData().getData();
-                        try {
-                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImageUri);
-                            saveImageToCache(this, bitmap,current_image_index+".png");
-                            // Display the image in the ImageView
-                                if (imageViews[current_image_index].getDrawable() == null) {
-                                    imageViews[current_image_index].setImageBitmap(bitmap);  // Set the bitmap to the first empty ImageView
-                                    imageSet = true;  // Mark that we've set the image
-                                }
-                            displayImage(bitmap);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
-                        }
-                        if (selectedImageUri != null) {
-                            Log.d(TAG, "Image selected: " + selectedImageUri);
-                            //TODO setWallpaper(selectedImageUri);
-                        } else {
-                            Log.e(TAG, "Selected image URI is null");
-                            Toast.makeText(this, "Failed to get image", Toast.LENGTH_SHORT).show();
+                        Intent data = result.getData();
+
+                        // Check if multiple images are selected
+                        if (data.getClipData() != null) {
+                            int count = Math.min(data.getClipData().getItemCount(), imageViews.length); // Limit to ImageView array size
+                            for (int i = 0; i < count; i++) {
+                                Uri imageUri = data.getClipData().getItemAt(i).getUri();
+                                processAndDisplayImage(imageUri, i);
+                            }
+                        } else if (data.getData() != null) {
+                            // Single image selected
+                            Uri imageUri = data.getData();
+                            processAndDisplayImage(imageUri, 0); // Display in the first ImageView
                         }
                     } else {
                         Log.d(TAG, "No image selected or operation cancelled");
@@ -132,6 +129,25 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
     }
+
+    private void processAndDisplayImage(Uri imageUri, int index) {
+        try {
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+            saveImageToCache(this, bitmap, index + ".png");
+
+            // Display the image in the respective ImageView
+            if (imageViews[index].getDrawable() == null) {
+                imageViews[index].setImageBitmap(bitmap);
+            }
+
+            displayImage(bitmap); // Additional display if needed
+            Log.d(TAG, "Image selected and displayed at index " + index + ": " + imageUri);
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to load image", e);
+            Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void displayImage(Bitmap bitmap) {
         if (bitmap == null) {
             Log.e(TAG, "Error: Bitmap is null");
@@ -140,16 +156,16 @@ public class MainActivity extends AppCompatActivity {
 
 
         // Hide other ImageViews
-            if (imageViews[current_image_index] != null) {
-                if (imageViews[current_image_index].getDrawable() != null) {
-                    imageViews[current_image_index].setImageBitmap(bitmap);
-                    imageViews[current_image_index].setVisibility(View.VISIBLE);
-                    //break;
-                    current_image_index++;
-                }
-            } else {
-                Log.e(TAG, "Error: imageViews[" + current_image_index + "] is null");
+        if (imageViews[current_image_index] != null) {
+            if (imageViews[current_image_index].getDrawable() != null) {
+                imageViews[current_image_index].setImageBitmap(bitmap);
+                imageViews[current_image_index].setVisibility(View.VISIBLE);
+                //break;
+                current_image_index++;
             }
+        } else {
+            Log.e(TAG, "Error: imageViews[" + current_image_index + "] is null");
+        }
 
     }
 
@@ -207,9 +223,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void openImagePicker() {
         try {
-            Intent intent = new Intent(Intent.ACTION_PICK);
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.setType("image/*");
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
             imagePickerLauncher.launch(intent);
+
         } catch (Exception e) {
             Log.e(TAG, "Error opening image picker", e);
             Toast.makeText(this, "Error opening image picker", Toast.LENGTH_SHORT).show();
