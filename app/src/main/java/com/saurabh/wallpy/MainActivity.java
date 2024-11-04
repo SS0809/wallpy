@@ -10,20 +10,19 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
-import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -35,22 +34,26 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    public static final String ACTION_WALLPAPER_STATUS = "com.saurabh.wallpy.WALLPAPER_STATUS";
     private static final int PERMISSION_REQUEST_CODE = 100;
     private static final int PICK_IMAGE_REQUEST = 1;
+    private static boolean stone = false;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
     private ArrayList<Bitmap> cachedImages = new ArrayList<>();
     private GridView coursesGV;
     private ImageAdapter imageAdapter;
+    private TextView editTextNumber2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.d(TAG, "onCreate called");
-
+        editTextNumber2 = findViewById(R.id.editTextNumber2);
         coursesGV = findViewById(R.id.idGVcourses);
         imageAdapter = new ImageAdapter(this, cachedImages);
         coursesGV.setAdapter(imageAdapter);
+        updateCacheSize(); // Update cache size display
         loadCachedImages();
         setupImagePicker();
     }
@@ -77,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         Intent data = result.getData();
                         if (data.getClipData() != null) {
-                            int count = Math.min(data.getClipData().getItemCount(), 10); // Limit to 10 images
+                            int count = data.getClipData().getItemCount();
                             for (int i = 0; i < count; i++) {
                                 Uri imageUri = data.getClipData().getItemAt(i).getUri();
                                 processAndDisplayImage(imageUri);
@@ -92,13 +95,35 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
     }
+    private void updateCacheSize() {
+        File cacheDir = getCacheDir();
+        long totalSize = getDirectorySize(cacheDir);
+        editTextNumber2.setText(String.valueOf(totalSize/1024/1024+ "MB")); // update the EditText
+    }
 
+    private long getDirectorySize(File dir) {
+        long size = 0;
+        if (dir != null && dir.isDirectory()) {
+            for (File file : dir.listFiles()) {
+                if (file.isFile()) {
+                    size += file.length();
+                }
+            }
+        }
+        return size;
+    }
     private void processAndDisplayImage(Uri imageUri) {
+        if (imageUri == null) {
+            Toast.makeText(this, "Invalid image URI", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
             saveImageToCache(bitmap);
             cachedImages.add(bitmap);
-            imageAdapter.notifyDataSetChanged(); // Notify adapter to refresh grid
+            imageAdapter.notifyDataSetChanged();
+            updateCacheSize(); // Update cache size display
             Log.d(TAG, "Image selected and displayed: " + imageUri);
         } catch (IOException e) {
             Log.e(TAG, "Failed to load image", e);
@@ -109,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
     private void saveImageToCache(Bitmap bitmap) {
         File cacheDir = getCacheDir();
         String fileName = System.currentTimeMillis() + ".png"; // Unique filename
+
         File imageFile = new File(cacheDir, fileName);
         try (FileOutputStream fos = new FileOutputStream(imageFile)) {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
@@ -123,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
         WallpaperManager wallpaperManager = WallpaperManager.getInstance(getApplicationContext());
         try {
             wallpaperManager.setBitmap(bitmap);
-            Toast.makeText(getApplicationContext(), "Wallpaper set successfully!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Wallpaper2 set successfully!", Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(getApplicationContext(), "Error setting wallpaper!", Toast.LENGTH_SHORT).show();
@@ -136,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
             for (File file : files) {
                 if (file.delete()) {
                     Log.d(TAG, "Deleted file: " + file.getName());
+                    updateCacheSize(); // Update cache size display
                 } else {
                     Log.e(TAG, "Failed to delete file: " + file.getName());
                 }
@@ -145,6 +172,23 @@ public class MainActivity extends AppCompatActivity {
         imageAdapter.notifyDataSetChanged(); // Notify the adapter to refresh the grid
         Toast.makeText(this, "Cache cleared", Toast.LENGTH_SHORT).show();
     }
+
+    public void transparent(View view) {
+        Button buttonChooseWallpaper = findViewById(R.id.buttonChooseWallpaper);
+        Button buttonClearCache = findViewById(R.id.buttonClearCache);
+        if(stone){
+            getSupportActionBar().hide();
+            buttonChooseWallpaper.setVisibility(View.GONE);
+            buttonClearCache.setVisibility(View.GONE);
+            stone = false;
+        }else {
+            getSupportActionBar().show();
+            buttonChooseWallpaper.setVisibility(View.VISIBLE);
+            buttonClearCache.setVisibility(View.VISIBLE);
+            stone = true;
+        }
+    }
+
 
     public void chooseWallpaper(View view) {
         if (checkPermissions()) {
@@ -175,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 openImagePicker();
@@ -187,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(wallpaperReceiver, new IntentFilter(WallpaperService.ACTION_WALLPAPER_STATUS));
+        registerReceiver(wallpaperReceiver, new IntentFilter(ACTION_WALLPAPER_STATUS), Context.RECEIVER_NOT_EXPORTED);
     }
 
     @Override
