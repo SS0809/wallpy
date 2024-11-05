@@ -1,40 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    tools:ignore="ExtraText">
+
+    <GridView
+        android:id="@+id/idGVcourses"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:numColumns="1">
+    </GridView>
 
 
     <Button
         android:id="@+id/buttonChooseWallpaper"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@null"
         android:onClick="chooseWallpaper"
-        android:text="Choose Wallpaper"
+        android:text="Choose"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.2"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/fetchdata"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:onClick="fetchdata"
+        android:text="fetch"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.105"
+        app:layout_constraintStart_toStartOf="parent" />
+
 
     <Button
         android:id="@+id/buttonClearCache"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@null"
         android:onClick="clearCache"
-        android:text="Clear Cache"
+        android:text="Clear"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.816"
+        app:layout_constraintHorizontal_bias="0.887"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <GridView
-        android:id="@+id/idGVcourses"
-        android:layout_width="409dp"
-        android:layout_height="731dp"
-        android:numColumns="1"
-        tools:layout_editor_absoluteX="1dp"
-        tools:layout_editor_absoluteY="-1dp" />
+    <TextView
+        android:id="@+id/editTextNumber2"
+        android:layout_width="31dp"
+        android:layout_height="18dp"
+        android:background="#5A312C2C"
+        android:ems="10"
+        android:onClick="transparent"
+        android:textColor="#6BFFFFFF"
+        android:textSize="8sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.948"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.187" />
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

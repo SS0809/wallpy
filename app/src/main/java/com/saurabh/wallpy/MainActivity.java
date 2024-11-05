@@ -2,6 +2,7 @@ package com.saurabh.wallpy;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,6 +19,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
@@ -34,14 +36,16 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    private NumberPicker numberPicker;
+    private Context context;
     public static final String ACTION_WALLPAPER_STATUS = "com.saurabh.wallpy.WALLPAPER_STATUS";
     private static final int PERMISSION_REQUEST_CODE = 100;
     private static final int PICK_IMAGE_REQUEST = 1;
     private static boolean stone = false;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
-    private ArrayList<Bitmap> cachedImages = new ArrayList<>();
+    public static ArrayList<Bitmap> cachedImages = new ArrayList<>();
     private GridView coursesGV;
-    private ImageAdapter imageAdapter;
+    public static ImageAdapter imageAdapter;
     private TextView editTextNumber2;
 
     @Override
@@ -95,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
     }
-    private void updateCacheSize() {
+    public void updateCacheSize() {
         File cacheDir = getCacheDir();
         long totalSize = getDirectorySize(cacheDir);
         editTextNumber2.setText(String.valueOf(totalSize/1024/1024+ "MB")); // update the EditText
@@ -131,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void saveImageToCache(Bitmap bitmap) {
+    public void saveImageToCache(Bitmap bitmap) {
         File cacheDir = getCacheDir();
         String fileName = System.currentTimeMillis() + ".png"; // Unique filename
 
@@ -172,19 +176,43 @@ public class MainActivity extends AppCompatActivity {
         imageAdapter.notifyDataSetChanged(); // Notify the adapter to refresh the grid
         Toast.makeText(this, "Cache cleared", Toast.LENGTH_SHORT).show();
     }
+    public void fetchdata(View view) {
+        // Create a NumberPicker and set its properties
+        NumberPicker numberPicker = new NumberPicker(this);
+        numberPicker.setMinValue(1); // Set minimum value
+        numberPicker.setMaxValue(10); // Set maximum value
 
-    public void transparent(View view) {
+        // Create an AlertDialog and set the NumberPicker as its view
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select a Number")
+                .setIcon(R.mipmap.ic_launcher)
+                .setView(numberPicker) // Set the NumberPicker as the dialog's view
+                .setPositiveButton("OK", (dialog, which) -> {
+                    int selectedNumber = numberPicker.getValue();
+                    new FetchImagesTask(this, selectedNumber).execute("url/list-files?bucket=&maxKeys=" + selectedNumber);
+                    Toast.makeText(this, "Selected number: " + selectedNumber, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss()) // Handle cancellation
+                .show();
+    }
+
+
+
+   public void transparent(View view) {
         Button buttonChooseWallpaper = findViewById(R.id.buttonChooseWallpaper);
         Button buttonClearCache = findViewById(R.id.buttonClearCache);
+        Button fetchdata = findViewById(R.id.fetchdata);
         if(stone){
             getSupportActionBar().hide();
             buttonChooseWallpaper.setVisibility(View.GONE);
             buttonClearCache.setVisibility(View.GONE);
+            fetchdata.setVisibility(View.GONE);
             stone = false;
         }else {
             getSupportActionBar().show();
             buttonChooseWallpaper.setVisibility(View.VISIBLE);
             buttonClearCache.setVisibility(View.VISIBLE);
+            fetchdata.setVisibility(View.VISIBLE);
             stone = true;
         }
     }
