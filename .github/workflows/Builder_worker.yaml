@@ -20,7 +20,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17' # Use your desired Java version
-      
+          
+      - name: Set execute permissions for gradlew
+        run: chmod +x ./gradlew
+
       # Set up Gradle
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v2
