@@ -14,13 +14,13 @@ jobs:
     steps:
       # Checkout the repository
       - uses: actions/checkout@v3
-      
+
       # Set up Java environment
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17' # Use your desired Java version
-          
+
       - name: Set execute permissions for gradlew
         run: chmod +x ./gradlew
 
@@ -38,10 +38,7 @@ jobs:
       - name: Prepare Deployment
         run: |
           mkdir docs
-          mv app/build/outputs/apk/release/app-release.apk docs/
-          cp README.md docs/
-          cp ./app/src/main/res/mipmap-hdpi/ic_launcher.png docs/
-
+          mv app/build/outputs/apk/debug/app-debug.apk docs/
       # Upload the release APK as an artifact
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v3
@@ -54,7 +51,6 @@ jobs:
         run: |
           mkdir upload
           cp -r docs upload/
-
       # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4.6.9
