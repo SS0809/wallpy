@@ -32,7 +32,7 @@ jobs:
 
       # Build the release APK using Gradle
       - name: Build APK
-        run: ./gradlew assembleRelease
+        run: ./gradlew build
 
       # Create a folder for deployment artifacts
       - name: Prepare Deployment
